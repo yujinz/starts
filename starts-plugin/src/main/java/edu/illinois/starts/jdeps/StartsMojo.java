@@ -6,10 +6,12 @@ package edu.illinois.starts.jdeps;
 
 import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
 
@@ -36,6 +38,11 @@ import org.apache.maven.project.MavenProject;
 public class StartsMojo extends RunMojo {
     private Logger logger;
 
+    /**
+     * Set this option and the updateRunChecksums option to "false" together to prevent updating test dependencies
+     * on disk. The default value of "true" invokes UpdateMojo to run updateForNextRun() when updateRunChecksums
+     * is "false". If updateRunChecksums is "true", this option will not affect the behaviour of "starts:starts".
+     */
     @Parameter(property = "enableMojoExecutor", defaultValue = "true")
     private boolean enableMojoExecutor;
     /**
@@ -56,7 +63,6 @@ public class StartsMojo extends RunMojo {
     @Component
     private BuildPluginManager pluginManager;
 
-
     public void execute() throws MojoExecutionException {
         long endOfRunMojo = Long.parseLong(System.getProperty("[PROFILE] END-OF-RUN-MOJO: "));
         Logger.getGlobal().setLoggingLevel(Level.parse(loggingLevel));
@@ -64,7 +70,7 @@ public class StartsMojo extends RunMojo {
         long end = System.currentTimeMillis();
         logger.log(Level.FINE, "[PROFILE] TEST-RUNNING-TIME: " + Writer.millsToSeconds(end - endOfRunMojo));
 
-        if (enableMojoExecutor) {
+        if (enableMojoExecutor && !updateRunChecksums) {
             executeMojo(
                     plugin(
                             groupId("edu.illinois"),
