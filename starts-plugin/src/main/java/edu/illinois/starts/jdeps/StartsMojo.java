@@ -78,7 +78,7 @@ public class StartsMojo extends RunMojo {
                             version("1.4-SNAPSHOT")
                     ),
                     goal("update"),
-                    configuration(),
+                    configuration(element(name("writeNonAffected"), String.valueOf(writeNonAffected))),
                     executionEnvironment(mavenProject, mavenSession, pluginManager)
             );
         }
