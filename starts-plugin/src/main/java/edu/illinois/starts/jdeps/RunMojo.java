@@ -46,13 +46,20 @@ public class RunMojo extends DiffMojo {
     protected boolean retestAll;
 
     /**
-     * Set this to "true" to save nonAffectedTests as a file on disk. This improve the time of
-     * updating test dependencies in offline mode by not running computeChangeData() for the second
-     * time.
-     * Note: Run with "-DstartsLogging=FINEST" does the same thing.
+     * Set this to "true" to save nonAffectedTests to a file on disk. This improves the time for
+     * updating test dependencies in offline mode by not running computeChangeData() twice.
+     * Note: Running with "-DstartsLogging=FINEST" also writes nonAffected to disk.
      */
     @Parameter(property = "writeNonAffected", defaultValue = "false")
     protected boolean writeNonAffected;
+
+    /**
+     * Set this to "true" to invoke UpdateMojo in StartsMojo to update checksums and test dependencies.
+     * The default value of "false" will update test dependencies in RunMojo and will not invoke UpdateMojo.
+     * If updateRunChecksums is "false", this option will not affect any behaviour of "starts:starts".
+     */
+    @Parameter(property = "enableMojoExecutor", defaultValue = "false")
+    protected boolean enableMojoExecutor;
 
     protected Set<String> nonAffectedTests;
     protected Set<String> changedClasses;
@@ -86,7 +93,7 @@ public class RunMojo extends DiffMojo {
             dynamicallyUpdateExcludes(excludePaths);
         }
         long startUpdateTime = System.currentTimeMillis();
-        if (updateRunChecksums) {
+        if (updateRunChecksums && !enableMojoExecutor) {
             updateForNextRun(nonAffectedTests);
         }
         long endUpdateTime = System.currentTimeMillis();
