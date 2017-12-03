@@ -38,12 +38,6 @@ import org.apache.maven.project.MavenProject;
 public class StartsMojo extends RunMojo {
     private Logger logger;
 
-    /**
-     * The Maven BuildPluginManager component.
-     */
-    @Component
-    private BuildPluginManager pluginManager;
-
     public void execute() throws MojoExecutionException {
         long endOfRunMojo = Long.parseLong(System.getProperty("[PROFILE] END-OF-RUN-MOJO: "));
         Logger.getGlobal().setLoggingLevel(Level.parse(loggingLevel));
@@ -53,6 +47,7 @@ public class StartsMojo extends RunMojo {
 
         if (enableMojoExecutor && updateRunChecksums) {
             try {
+                logger.log(Level.FINE, "available Semaphore permits: " + UpdateMojoRunnable.mutex.availablePermits());
                 UpdateMojoRunnable.mutex.acquire();
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
