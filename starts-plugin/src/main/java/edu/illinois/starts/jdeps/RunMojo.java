@@ -95,6 +95,14 @@ public class RunMojo extends DiffMojo {
         long startUpdateTime = System.currentTimeMillis();
         if (updateRunChecksums && !enableMojoExecutor) {
             updateForNextRun(nonAffectedTests);
+        } else if (updateRunChecksums && enableMojoExecutor) {
+            try {
+                UpdateMojoRunnable.mutex.acquire();
+                Thread updateThread = new Thread(new UpdateMojoRunnable(writeNonAffected));
+                updateThread.start();
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
         }
         long endUpdateTime = System.currentTimeMillis();
         logger.log(Level.FINE, "[PROFILE] STARTS-MOJO-UPDATE-TIME: "
