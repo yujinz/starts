@@ -4,6 +4,17 @@
 
 package edu.illinois.starts.jdeps;
 
+import static org.twdata.maven.mojoexecutor.MojoExecutor.artifactId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.groupId;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.name;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.version;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,18 +61,19 @@ public class RunMojo extends DiffMojo {
     /**
      * Set this to "true" to save nonAffectedTests to a file on disk. This improves the time for
      * updating test dependencies in offline mode by not running computeChangeData() twice.
-     * Note: Running with "-DstartsLogging=FINEST" also writes nonAffected to disk.
+     * Note: Running with "-DstartsLogging=FINEST" also writes nonAffected to a file on disk.
      */
     @Parameter(property = "writeNonAffected", defaultValue = "false")
     protected boolean writeNonAffected;
 
     /**
-     * Set this to "true" to invoke UpdateMojo in StartsMojo to update checksums and test dependencies.
-     * The default value of "false" will update test dependencies in RunMojo and will not invoke UpdateMojo.
+     * Set this to "true" to spawn another thread that executes UpdateMojo to update test dependencies
+     * in parallel with Maven test phase execution.
+     * The default value of "false" will update test dependencies before Maven test phase.
      * If updateRunChecksums is "false", this option will not affect any behaviour of "starts:starts".
      */
-    @Parameter(property = "enableMojoExecutor", defaultValue = "false")
-    protected boolean enableMojoExecutor;
+    @Parameter(property = "offlineMode", defaultValue = "false")
+    protected boolean offlineMode;
 
     /**
      * The Maven BuildPluginManager component.
@@ -100,23 +112,29 @@ public class RunMojo extends DiffMojo {
         } else {
             dynamicallyUpdateExcludes(excludePaths);
         }
-        long startUpdateTime = System.currentTimeMillis();
-        if (updateRunChecksums && !enableMojoExecutor) {
-            updateForNextRun(nonAffectedTests);
-        } else if (updateRunChecksums && enableMojoExecutor) {
-            try {
-                logger.log(Level.FINE, "available Semaphore permits: " + UpdateMojoRunnable.mutex.availablePermits());
-                UpdateMojoRunnable.mutex.acquire();
-                Thread updateThread = new Thread(new UpdateMojoRunnable(getProject(), getSession(), pluginManager,
-                        writeNonAffected));
-                updateThread.start();
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
+        if (updateRunChecksums) {
+            if (offlineMode) {
+                long updateStart = System.currentTimeMillis();
+                System.setProperty("[PROFILE] START-OF-PARALLEL-UPDATE-MOJO: ", Long.toString(updateStart));
+                try {
+                    logger.log(Level.FINEST, "Starting a parallel thread for UpdateMojo. Semaphore permits: "
+                            + UpdateMojoRunnable.mutex.availablePermits());
+                    UpdateMojoRunnable.mutex.acquire();
+                    Thread updateThread = new Thread(new UpdateMojoRunnable(getPluginDescriptor().getPlugin(),
+                            getProject(), getSession(), pluginManager, writeNonAffected));
+                    updateThread.start();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                    UpdateMojoRunnable.mutex.release();
+                }
+            } else {
+                long startUpdateTime = System.currentTimeMillis();
+                updateForNextRun(nonAffectedTests);
+                long endUpdateTime = System.currentTimeMillis();
+                logger.log(Level.FINE, "[PROFILE] STARTS-MOJO-UPDATE-TIME: "
+                        + Writer.millsToSeconds(endUpdateTime - startUpdateTime));
             }
         }
-        long endUpdateTime = System.currentTimeMillis();
-        logger.log(Level.FINE, "[PROFILE] STARTS-MOJO-UPDATE-TIME: "
-                + Writer.millsToSeconds(endUpdateTime - startUpdateTime));
     }
 
     private void dynamicallyUpdateExcludes(List<String> excludePaths) throws MojoExecutionException {

@@ -46,12 +46,11 @@ public class UpdateMojo extends DiffMojo {
     @Parameter(property = "writeNonAffected", defaultValue = "false")
     private boolean writeNonAffected;
 
-
     private Logger logger;
 
     public void execute() throws MojoExecutionException {
         Logger.getGlobal().setLoggingLevel(Level.parse(loggingLevel));
-        long start = System.currentTimeMillis();
+        long analysisPhaseStart = System.currentTimeMillis();
         logger = Logger.getGlobal();
         logger.log(Level.INFO, "********** Update **********");
 
@@ -64,9 +63,9 @@ public class UpdateMojo extends DiffMojo {
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-            long end = System.currentTimeMillis();
+            long analysisPhaseEnd = System.currentTimeMillis();
             logger.log(Level.FINE, "[PROFILE] readFromFile " + nonAffectedFilename + " : "
-                    + Writer.millsToSeconds(end - start));
+                    + Writer.millsToSeconds(analysisPhaseEnd - analysisPhaseStart));
         } else {
             Pair<Set<String>, Set<String>> data = computeChangeData();
             if (data != null) {
@@ -77,6 +76,7 @@ public class UpdateMojo extends DiffMojo {
             updateForNextRun(nonAffected);
         }
 
+        long start = Long.parseLong(System.getProperty("[PROFILE] START-OF-PARALLEL-UPDATE-MOJO: "));
         long end = System.currentTimeMillis();
         System.setProperty("[PROFILE] END-OF-UPDATE-MOJO: ", Long.toString(end));
         logger.log(Level.FINE, "[PROFILE] UPDATE-MOJO-TOTAL: " + Writer.millsToSeconds(end - start));
