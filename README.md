@@ -1,3 +1,13 @@
+# An Optimization of STARTS
+
+STARTS is a maven plugin for regression test selection, which enables the developers to only run tests that are impacted by the changes since the last build. It does the selection by maintaining a dependency graph of all source and test classes.
+
+This repository implements an optimization of STARTS by running the execution phase (e) and the graph computation phase (g) concurrently (see figure below). Ideally, this could improve the time by 7.5% according to [this paper](http://mir.cs.illinois.edu/legunsen/pubs/LegunsenETALSTARTSDemo.pdf). In practice, it improves the time by 5%. 
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQ96OfimUFk4tom4YO6kzyiRAwN2gT8pgegFu7bBT-n5VShMP9OY3x0sMiwdyf65PVIOQGw5I9GIhZD/pub?w=740&amp;h=310">
+
+Below is the original readme of STARTS with a new usage of the optimized version added to [Major Functionality](#major-functionality) section.
+
 # STARTS (*STA*tic *R*egression *T*est *S*election) Overview
 
 [![Build Status](https://travis-ci.org/TestingResearchIllinois/starts.svg?branch=master)](https://travis-ci.org/TestingResearchIllinois/starts)
@@ -40,24 +50,21 @@ Change the pom.xml to add the configuration for the STARTS plugin:
 
 1. To see all the goals that STARTS provides, run `mvn starts:help`
 2. To see the details for any of the goals, run `mvn starts:help -Ddetail=true -Dgoal=<goal>`;
- replace `<goal>` with the goal of interest.
+   replace `<goal>` with the goal of interest.
 
-### Major Functionality
+### Major Functionality 
 
 1. To see the **types** that changed since the last time STARTS was run:
-`mvn starts:diff`
-
+  `mvn starts:diff`
 2. To see the **types** that may be impacted by changes since the last
-time STARTS was run: `mvn starts:impacted`
-
+  time STARTS was run: `mvn starts:impacted`
 3. To see the **tests** that are affected by the most recent changes:
-`mvn starts:select`
-
+  `mvn starts:select`
 4. To perform RTS using STARTS (i.e., select tests and run the
-selected tests): `mvn starts:starts`
-
+  selected tests): `mvn starts:starts`
+  - ***To perform optimized RTS: `mvn starts:starts -DwriteNonAffected=true -DofflineMode=true`***
 5. To remove all artifacts that STARTS stores between versions
-(i.e. in the `.starts` directories): `mvn starts:clean`
+  (i.e. in the `.starts` directories): `mvn starts:clean`
 
 __NOTE:__ By default, commands (1) - (3) *will not* update the
 checksums of files in the latest version, while the command in (4)
