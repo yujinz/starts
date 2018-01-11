@@ -2,7 +2,7 @@
 
 STARTS is a maven plugin for regression test selection, which enables the developers to only run tests that are impacted by the changes since the last build. It does the selection by maintaining a dependency graph of all source and test classes.
 
-This repository implements an optimization of STARTS by running the execution phase (e) and the graph computation phase (g) concurrently (see figure below). Ideally, this could improve the time by 7.5% according to [this paper](http://mir.cs.illinois.edu/legunsen/pubs/LegunsenETALSTARTSDemo.pdf). In practice, it improves the time by 5%. 
+This repository implements an optimization of STARTS by running the execution phase (run affected tests) and the graph computation phase (find dependencies) concurrently (see figure below). Ideally, this could improve the time by 7.5% according to [this paper](http://mir.cs.illinois.edu/legunsen/pubs/LegunsenETALSTARTSDemo.pdf). In practice, it improves the time by 5%. 
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vQ96OfimUFk4tom4YO6kzyiRAwN2gT8pgegFu7bBT-n5VShMP9OY3x0sMiwdyf65PVIOQGw5I9GIhZD/pub?w=740&amp;h=310">
 
